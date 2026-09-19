@@ -24,6 +24,7 @@
             margin: 0 auto;
             position: relative;
             overflow: hidden;
+            transition: transform 0.1s;
         }
         @media (min-width: 480px) {
             .invitation-container {
@@ -59,14 +60,50 @@
         .fs-mystery  { font-size: clamp(1.4rem, 6vw, 2rem); }
 
         @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(400%); } }
+
+        /* ANIMACIONES DE EXPLOSIÓN */
+        @keyframes screenShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-3px, -4px) rotate(-1deg); }
+            20% { transform: translate(-5px, 0px) rotate(1deg); }
+            30% { transform: translate(5px, 4px) rotate(0deg); }
+            40% { transform: translate(2px, -3px) rotate(1deg); }
+            50% { transform: translate(-3px, 4px) rotate(-1deg); }
+            60% { transform: translate(-5px, 2px) rotate(0deg); }
+            70% { transform: translate(5px, 2px) rotate(-1deg); }
+            80% { transform: translate(-3px, -3px) rotate(1deg); }
+            90% { transform: translate(3px, 4px) rotate(0deg); }
+            100% { transform: translate(2px, -4px) rotate(-1deg); }
+        }
+        .is-shaking {
+            animation: screenShake 0.4s infinite;
+        }
+
+        @keyframes flashBang {
+            0% { background-color: transparent; }
+            10% { background-color: #ffffff; }
+            25% { background-color: #ff8800; }
+            40% { background-color: #ff0000; }
+            100% { background-color: #000000; }
+        }
+        .explode-effect {
+            display: flex !important;
+            animation: flashBang 1.5s forwards;
+        }
     </style>
 </head>
 <body class="font-body text-gray-200">
 
-    <!-- REPRODUCTOR DE AUDIO (Oculto) -->
+    <!-- REPRODUCTOR DE AUDIO -->
     <audio id="misionAudio" src="cancion.mp3" loop preload="auto"></audio>
 
-    <div class="invitation-container bg-noir relative">
+    <div class="invitation-container bg-noir relative" id="mainContainer">
+        
+        <!-- PANTALLA DE DESTRUCCIÓN SUPERPUESTA -->
+        <div id="explosionOverlay" class="absolute inset-0 z-[100] hidden flex-col items-center justify-center pointer-events-none">
+            <p id="destructText" class="font-bold-title text-4xl text-white tracking-widest opacity-0 transition-opacity duration-1000 mt-10">MENSAJE DESTRUIDO</p>
+        </div>
+
         <canvas id="pawsCanvas" class="absolute inset-0 z-0"></canvas>
 
         <!-- PANTALLA DE INICIO -->
@@ -95,16 +132,15 @@
         <!-- ESCENA 2: Nombre y Foto -->
         <div id="scene2" class="scene">
             <div class="slow-zoom">
-                <h1 class="font-bold-title fs-title text-white mb-2 leading-tight">
-                    AGENTE <span class="text-pink-panther">EVAN DAVID</span><br>
-                    <span class="text-white text-2xl">DÍAZ PATIÑO</span>
+                <!-- NOMBRE EN UN SOLO TONO -->
+                <h1 class="font-bold-title text-white mb-2 leading-tight flex flex-col gap-1">
+                    <span class="text-xl md:text-2xl text-gray-300">AGENTE</span>
+                    <span class="text-pink-panther fs-title block leading-none">EVAN DAVID DÍAZ PATIÑO</span>
                 </h1>
 
                 <!-- CONTENEDOR DE LA FOTO -->
                 <div class="relative mt-4 mb-4 transform -rotate-2 bg-gray-800/60 p-2 border border-pink-500/30 rounded-xl">
-                    <!-- La imagen se mostrará en blanco y negro y pasará a color -->
-                    <img src="foto_evan.jpg" alt="Foto del Agente Evan" class="w-32 h-32 object-cover rounded-lg border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)] grayscale opacity-90 transition-all duration-1000" id="agenteFoto">
-                    
+                    <img src="foto_evan.jpg" alt="Foto del Agente" class="w-32 h-32 object-cover rounded-lg border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)] grayscale opacity-90 transition-all duration-1000" id="agenteFoto">
                     <div class="absolute -bottom-2 -right-4 transform -rotate-12 border-4 border-red-600 text-red-600 font-bold-title text-lg px-2 py-1 rounded shadow-md opacity-90 bg-black/80">
                         CONFIDENCIAL
                     </div>
@@ -169,7 +205,7 @@
                 <p class="text-sm text-gray-300 mb-8 px-4">Serás redirigido a los servidores seguros de la agencia.</p>
 
                 <!-- REEMPLAZA ESTE ENLACE CON EL DE TU GOOGLE FORM -->
-                <a href="https://forms.gle/7KQqFrGnUp5khFS9A" 
+                <a href="AQUI_PEGA_EL_LINK_DE_TU_GOOGLE_FORM" 
                    target="_blank" rel="noopener noreferrer"
                    id="btnAbrirForm"
                    class="inline-block bg-pink-600 hover:bg-pink-500 transition-colors text-white font-bold-title tracking-widest px-8 py-4 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.5)]">
@@ -185,18 +221,20 @@
             </div>
         </div>
 
-        <!-- ESCENA 7: Despedida -->
+        <!-- ESCENA 7: Despedida y Autodestrucción -->
         <div id="scene7" class="scene">
             <div class="slow-zoom">
                 <h2 class="font-bold-title fs-title text-pink-panther mb-4">¡NO FALTES!</h2>
                 <p class="fs-body font-light text-gray-300">Ven con tu mejor actitud de detective.</p>
-                <div class="mt-8 opacity-50">
-                    <svg class="w-12 h-12 mx-auto text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                
+                <div class="mt-12 flex flex-col items-center justify-center">
+                    <button id="btnExplode" class="bg-red-700 hover:bg-red-600 transition-colors text-white font-bold-title tracking-widest px-6 py-3 rounded-full shadow-[0_0_25px_rgba(220,38,38,0.7)] animate-pulse border-2 border-red-400">
+                        AUTODESTRUIR MENSAJE
+                    </button>
+                    <p id="countdownText" class="text-red-500 font-bold-title text-4xl mt-4 hidden drop-shadow-[0_0_10px_rgba(255,0,0,0.8)]"></p>
                 </div>
-                <p class="text-xs text-gray-500 mt-8">Fin de la transmisión.</p>
-                <button id="replayBtn" class="mt-6 px-5 py-2 rounded-full border border-pink-500 text-pink-400 text-sm tracking-widest hover:bg-pink-500 hover:text-white transition-colors">
-                    VER DE NUEVO
-                </button>
+                
+                <p class="text-xs text-gray-500 mt-12">Fin de la transmisión.</p>
             </div>
         </div>
 
@@ -314,6 +352,13 @@
 
             document.getElementById('progressBar').style.width = '0%';
             document.getElementById('progressBarContainer').classList.add('hidden');
+            
+            // Reset Explosion UI
+            document.getElementById('btnExplode').style.display = 'inline-block';
+            document.getElementById('countdownText').style.display = 'none';
+            document.getElementById('explosionOverlay').classList.add('hidden');
+            document.getElementById('explosionOverlay').classList.remove('explode-effect');
+            document.getElementById('destructText').style.opacity = '0';
 
             const startScreen = document.getElementById('startScreen');
             startScreen.style.display = 'flex';
@@ -325,7 +370,6 @@
             startScreen.style.opacity = '0';
             setTimeout(() => { startScreen.style.display = 'none'; }, 1000);
 
-            // Iniciar canción
             audioEl.play().catch(e => console.log("El navegador bloqueó el autoplay del audio."));
 
             const progressContainer = document.getElementById('progressBarContainer');
@@ -351,22 +395,60 @@
                 }
 
                 if (elapsed >= RSVP_TIME) {
-                    clearInterval(videoInterval); // Detener barra en la escena de confirmación
+                    clearInterval(videoInterval); 
                 }
             }, 100);
         }
 
-        // Avanzar a la escena final después de ir al formulario
         document.getElementById('btnFinalizar').addEventListener('click', () => {
             document.getElementById('progressBarContainer').classList.add('hidden');
             showScene('scene7');
         });
 
         document.getElementById('startScreen').addEventListener('click', startVideo);
-        document.getElementById('replayBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            resetExperience();
+
+        // LÓGICA DE LA EXPLOSIÓN
+        document.getElementById('btnExplode').addEventListener('click', () => {
+            const btn = document.getElementById('btnExplode');
+            const countdown = document.getElementById('countdownText');
+            const mainContainer = document.getElementById('mainContainer');
+            const overlay = document.getElementById('explosionOverlay');
+            const textDestruct = document.getElementById('destructText');
+            
+            btn.style.display = 'none';
+            countdown.style.display = 'block';
+            
+            let time = 3;
+            countdown.innerText = `00:0${time}`;
+            
+            let interval = setInterval(() => {
+                time--;
+                if (time > 0) {
+                    countdown.innerText = `00:0${time}`;
+                    mainContainer.classList.add('is-shaking'); 
+                } else {
+                    clearInterval(interval);
+                    countdown.style.display = 'none';
+                    
+                    // ¡BOOM!
+                    mainContainer.classList.add('is-shaking');
+                    overlay.classList.remove('hidden');
+                    overlay.classList.add('explode-effect');
+                    audioEl.pause(); 
+                    
+                    setTimeout(() => {
+                        mainContainer.classList.remove('is-shaking');
+                        textDestruct.style.opacity = '1';
+                    }, 800);
+                    
+                    // Opcional: Reiniciar la app tras 5 segundos de pantalla negra
+                    setTimeout(() => {
+                        resetExperience();
+                    }, 5000);
+                }
+            }, 1000);
         });
+
     </script>
 </body>
 </html>
